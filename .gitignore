@@ -1,0 +1,78 @@
+# ========================================
+# Pinnacle 6 — .gitignore
+# ========================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+
+# Environment / Secrets — NEVER UPLOAD
+.env
+.env.local
+.env.production
+.env.bak
+*.env
+secrets.json
+config_secret.py
+
+# Model Weights (large binary files — stored separately)
+*.h5
+*.pth
+*.pkl
+*.onnx
+*.pt
+*.weights
+*.pb
+*.tflite
+
+# Database files (contain user data)
+*.db
+*.sqlite
+*.sqlite3
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.next/
+npm-debug.log*
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test outputs
+*_output.txt
+diagnostic_output.txt
+diagnostic_results.txt
+startup_log*.txt
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Temp files
+*.tmp
+*.bak
+
+# Backup folder
+BACKUP_SOURCE/

@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+python-multipart
+numpy
+opencv-python-headless
+tensorflow
+pydantic
+python-dotenv
+requests
+passlib
+python-jose
+bcrypt
+realitydefender
+torch>=2.0.0
+torchvision>=0.15.0
+Pillow>=9.0.0
