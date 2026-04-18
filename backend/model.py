@@ -312,15 +312,15 @@ def predict_audio(audio_bytes, filename: str):
     # 1. Real API Call (Placeholder Implementation)
     if AUDIO_API_KEY:
         try:
-            # content_type = "audio/wav" # Determine from filename?
+            # TODO: Replace with actual audio deepfake API integration
             # headers = {"Authorization": AUDIO_API_KEY}
             # files = {'file': (filename, audio_bytes)}
             # response = requests.post("https://api.audio-deepfake-detect.com/v1/scan", headers=headers, files=files)
             # result = response.json()
             # prob = result['probability']
-            pass
-        except Exception:
-             pass
+            logger.info("Audio API key present but no API endpoint configured yet.")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Audio API request failed: {e}")
 
     # 2. Simulation (Aurigin Logic)
     import hashlib
