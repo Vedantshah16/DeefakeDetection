@@ -7,8 +7,7 @@ import HistoryCharts from './history/HistoryCharts';
 import HistoryFilters from './history/HistoryFilters';
 import HistoryTable from './history/HistoryTable';
 import HistoryGrid from './history/HistoryGrid';
-
-const API_URL = "http://127.0.0.1:8000";
+import { API_URL } from '../config/api';
 
 const DetectionHistory = () => {
     const { user } = useAuth();

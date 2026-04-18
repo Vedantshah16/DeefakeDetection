@@ -3,8 +3,7 @@ import axios from 'axios';
 import { Upload, Camera, AlertTriangle, CheckCircle, Activity, Zap, Scan, Image, Film, Mic, X, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import DashboardStats from './DashboardStats';
-
-const API_URL = "http://127.0.0.1:8000";
+import { API_URL } from '../config/api';
 
 /* ─── SVG Confidence Ring (Dark Theme) ─── */
 function ConfidenceRing({ percent, isReal, size = 140 }) {
