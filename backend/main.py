@@ -14,6 +14,10 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import logging
+import secrets
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # TrueSight AI model imports
 try:
@@ -34,9 +38,10 @@ except ImportError:
 app = FastAPI(title="Pinnacle 6 Deepfake Detector")
 
 # Configure CORS for Frontend
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all for hackathon usage
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,9 +53,9 @@ logger = logging.getLogger("uvicorn")
 
 
 # JWT Configuration
-SECRET_KEY = "your_secret_key_here_change_for_production" # TODO: usage env var
+SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 # AUTO_ERROR=False allows us to handle missing tokens gracefully in our own dependency
@@ -161,6 +166,11 @@ def clear_history(current_user: dict = Depends(get_current_user)):
 
 # --- Auth Models & Endpoints ---
 
+# File size limits
+MAX_IMAGE_SIZE = int(os.getenv("MAX_IMAGE_SIZE_MB", "10")) * 1024 * 1024  # 10MB default
+MAX_VIDEO_SIZE = int(os.getenv("MAX_VIDEO_SIZE_MB", "100")) * 1024 * 1024  # 100MB default
+MAX_AUDIO_SIZE = int(os.getenv("MAX_AUDIO_SIZE_MB", "50")) * 1024 * 1024  # 50MB default
+
 class UserCreate(BaseModel):
     username: str
     password: str
@@ -175,6 +185,14 @@ class Token(BaseModel):
 
 @app.post("/register")
 def register(user: UserCreate):
+    # Input validation
+    if not user.username or len(user.username) < 3 or len(user.username) > 32:
+        raise HTTPException(status_code=400, detail="Username must be 3-32 characters")
+    if not user.username.isalnum():
+        raise HTTPException(status_code=400, detail="Username must be alphanumeric")
+    if not user.password or len(user.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
     db_user = database.get_user_by_username(user.username)
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
@@ -226,6 +244,19 @@ async def detect_deepfake(
         # Determine file type
         filename = file.filename.lower()
         is_video = filename.endswith(('.mp4', '.avi', '.mov', '.webm', '.mkv'))
+        is_audio = filename.endswith(('.wav', '.mp3', '.flac', '.ogg', '.m4a'))
+
+        # File size validation
+        file.file.seek(0, 2)
+        file_size = file.file.tell()
+        file.file.seek(0)
+
+        if is_video and file_size > MAX_VIDEO_SIZE:
+            raise HTTPException(status_code=413, detail=f"Video file too large. Max {MAX_VIDEO_SIZE // (1024*1024)}MB")
+        elif is_audio and file_size > MAX_AUDIO_SIZE:
+            raise HTTPException(status_code=413, detail=f"Audio file too large. Max {MAX_AUDIO_SIZE // (1024*1024)}MB")
+        elif not is_video and not is_audio and file_size > MAX_IMAGE_SIZE:
+            raise HTTPException(status_code=413, detail=f"Image file too large. Max {MAX_IMAGE_SIZE // (1024*1024)}MB")
         
         if is_video:
             # Save video to temp file for OpenCV processing
