@@ -43,19 +43,26 @@ def init_db():
             )
         ''')
         conn.commit()
-        
+
         # Migration: Add new columns if they don't exist
         try:
             conn.execute("ALTER TABLE detections ADD COLUMN user_id INTEGER REFERENCES users(id)")
             logger.info("Added user_id column to detections")
         except sqlite3.OperationalError:
             pass # Column likely exists
-            
+
         try:
             conn.execute("ALTER TABLE detections ADD COLUMN is_hidden BOOLEAN DEFAULT 0")
             logger.info("Added is_hidden column to detections")
         except sqlite3.OperationalError:
             pass # Column likely exists
+
+        # Create indexes for common queries (after migrations so columns exist)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_detections_user_id ON detections(user_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_detections_created_at ON detections(created_at)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_detections_media_type ON detections(media_type)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
+        conn.commit()
 
         logger.info("Database initialized successfully.")
     except Exception as e:
