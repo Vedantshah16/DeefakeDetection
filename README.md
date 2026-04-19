@@ -1,8 +1,27 @@
 # TrueSight AI — Deepfake Detection System
 
+<p align="center">
+  <img src="backend/evaluation_graphs/6_evaluation_dashboard.png" alt="TrueSight AI Model Evaluation Dashboard" width="800">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.13-blue.svg" alt="Python 3.13">
+  <img src="https://img.shields.io/badge/framework-FastAPI-009688.svg" alt="FastAPI">
+  <img src="https://img.shields.io/badge/frontend-React%2018-61DAFB.svg" alt="React 18">
+  <img src="https://img.shields.io/badge/model-EfficientNet--B4-orange.svg" alt="EfficientNet-B4">
+  <img src="https://img.shields.io/badge/accuracy-87.6%25-brightgreen.svg" alt="Accuracy 87.6%">
+  <img src="https://img.shields.io/badge/status-academic--project-yellow.svg" alt="Academic Project">
+</p>
+
 **Multi-modal deepfake detection for images, video, and audio.**
 
 Built by Vedant Shah, Rashil Shah, and Vedant Shetty as a capstone project (Pinnacle 6) at Atlas SkillTech University (uGDX School of Technology), Mumbai, under the supervision of Prof. Yogesh Jadhav and Kunal Meher.
+
+---
+
+## Why this project
+
+Deepfake-generated media is increasingly used for fraud, harassment, and misinformation. TrueSight AI is a practical research project exploring how a mid-sized vision model (EfficientNet-B4) can be deployed as an accessible web tool for flagging manipulated images, video, and audio. It is not a production security system — it is an academic capstone that demonstrates end-to-end deployment of a deepfake classifier.
 
 ---
 
@@ -21,6 +40,36 @@ TrueSight AI is a full-stack web application that analyzes uploaded images, vide
 | Decision threshold | 0.70 |
 
 Evaluation artifacts (training curves, confusion matrix, ROC curve, sample predictions) are in `backend/evaluation_graphs/`.
+
+---
+
+## Model Evaluation
+
+### Training Dynamics
+
+<p align="center">
+  <img src="backend/evaluation_graphs/1_training_vs_validation_accuracy.png" alt="Training vs Validation Accuracy" width="45%">
+  <img src="backend/evaluation_graphs/2_training_vs_validation_loss.png" alt="Training vs Validation Loss" width="45%">
+</p>
+
+The training curves show steady convergence with a ~6% train/validation gap — indicating the model is well-generalized rather than overfit.
+
+### Classification Performance
+
+<p align="center">
+  <img src="backend/evaluation_graphs/3_confusion_matrix.png" alt="Confusion Matrix" width="45%">
+  <img src="backend/evaluation_graphs/4_roc_curve.png" alt="ROC Curve" width="45%">
+</p>
+
+The confusion matrix shows balanced error rates across the REAL and FAKE classes. The ROC curve yields an AUC of 0.89 at the operating threshold of 0.70.
+
+### Sample Predictions
+
+<p align="center">
+  <img src="backend/evaluation_graphs/5_sample_predictions.png" alt="Sample Predictions" width="90%">
+</p>
+
+Representative outputs on held-out test samples, showing the model's verdict alongside ground truth labels.
 
 ---
 
