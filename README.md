@@ -223,7 +223,7 @@ pinnacle6/
 
 - **Vedant Shah** — Project lead, full-stack engineering, model training
 - **Rashil Shah** — Backend & model evaluation
-- **Vedant Shetty** — Frontend engineering
+- **Vedant Shetty** — Frontend engineering and System architecture
 
 ### Supervision
 
