@@ -23,10 +23,10 @@ ENV/
 *.env
 secrets.json
 config_secret.py
+backend/firebase-service-account.json
 
-# Model Weights (large binary files — stored separately)
+# Model Weights (large binary files — tracked via Git LFS, not ignored)
 *.h5
-*.pth
 *.pkl
 *.onnx
 *.pt
@@ -38,6 +38,7 @@ config_secret.py
 *.db
 *.sqlite
 *.sqlite3
+backend/*.db-journal
 
 # Node / Frontend
 node_modules/
@@ -45,6 +46,7 @@ dist/
 build/
 .next/
 npm-debug.log*
+frontend/.vite/
 
 # Logs
 *.log
@@ -69,6 +71,9 @@ startup_log*.txt
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Test cache
+.pytest_cache/
 
 # Temp files
 *.tmp

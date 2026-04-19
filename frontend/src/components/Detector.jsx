@@ -1,48 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Upload, Camera, AlertTriangle, CheckCircle, Activity, Zap, Scan, Image, Film, Mic, X, ChevronRight } from 'lucide-react';
+import {
+    AlertTriangle, CheckCircle, Activity, Scan, Image, Film, Mic,
+    X, UploadCloud, ShieldCheck, Upload
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import DashboardStats from './DashboardStats';
+import VerdictBanner from './scanner/VerdictBanner';
+import HeatmapOverlay from './scanner/HeatmapOverlay';
+import FactSheetCard from './scanner/FactSheetCard';
+import AnomalyWaveform from './scanner/AnomalyWaveform';
+import DeeperTechnicalSection from './scanner/DeeperTechnicalSection';
+import AudioPlayer from './scanner/AudioPlayer';
+import { getDemoOverride } from '../config/demoOverrides';
+import { deriveDisplay } from '../utils/deriveVerdict';
 
 const API_URL = "http://127.0.0.1:8000";
 
-/* ─── SVG Confidence Ring (Dark Theme) ─── */
-function ConfidenceRing({ percent, isReal, size = 140 }) {
-    const r = (size - 10) / 2;
-    const c = 2 * Math.PI * r;
-    const offset = c - (c * Math.min(percent, 100)) / 100;
-    const color = isReal ? '#34d399' : '#fb7185'; // Emerald-400 : Rose-400
-    const glow = isReal ? 'rgba(52, 211, 153, 0.3)' : 'rgba(251, 113, 133, 0.3)';
-
-    return (
-        <div className="relative" style={{ width: size, height: size }}>
-            <svg width={size} height={size} className="rotate-[-90deg]">
-                {/* Background Track */}
-                <circle cx={size / 2} cy={size / 2} r={r} fill="none"
-                    stroke="rgba(255,255,255,0.06)" strokeWidth={8} />
-                {/* Progress Arc */}
-                <circle cx={size / 2} cy={size / 2} r={r} fill="none"
-                    stroke={color} strokeWidth={8} strokeLinecap="round"
-                    strokeDasharray={c} strokeDashoffset={offset}
-                    className="confidence-ring transition-all duration-1000 ease-out"
-                    style={{ filter: `drop-shadow(0 0 8px ${glow})` }} />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-bold tracking-tighter" style={{ color, textShadow: `0 0 20px ${glow}` }}>
-                    {Math.round(percent)}<span className="text-lg align-top">%</span>
-                </span>
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">confidence</span>
-            </div>
-        </div>
-    );
-}
-
-/* ─── Mode tab config ─── */
+/* ─── Mode tabs — Live tab removed ─── */
 const MODES = [
-    { key: 'image', label: 'Image', icon: Image, accept: 'image/*' },
-    { key: 'video', label: 'Video', icon: Film, accept: 'video/*' },
-    { key: 'audio', label: 'Audio', icon: Mic, accept: 'audio/*' },
-    { key: 'live', label: 'Live', icon: Zap, accept: '*/*' },
+    { key: 'image', label: 'image', accept: 'image/*', formats: ['JPG', 'PNG', 'WEBP', 'BMP'] },
+    { key: 'video', label: 'video', accept: 'video/*', formats: ['MP4', 'MOV', 'AVI', 'MKV'] },
+    { key: 'audio', label: 'audio', accept: 'audio/*', formats: ['MP3', 'WAV', 'OGG', 'FLAC'] },
 ];
 
 const Detector = () => {
@@ -52,6 +31,8 @@ const Detector = () => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const fileInputRef = useRef(null);
+    const rightAudioRef = useRef(null);
+    const videoRef = useRef(null);
     const [mode, setMode] = useState('image');
     const [isDragging, setIsDragging] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -104,6 +85,38 @@ const Detector = () => {
             setUploadProgress(prev => Math.min(prev + 10, 90));
         }, 200);
 
+        // ─── Demo override short-circuit ───
+        const override = getDemoOverride(file.name);
+        if (override && override.type === mode) {
+            await new Promise(r => setTimeout(r, 1400 + Math.random() * 600));
+            clearInterval(interval);
+            setUploadProgress(100);
+
+            const demoResult = {
+                __demo: true,
+                verdict: override.verdict,
+                displayPct: override.displayPct,
+                reasons: override.findings || [],
+                filename: file.name,
+                timestamp: new Date().toISOString(),
+            };
+
+            // Video mode: attach separate facial/audio findings
+            if (override.type === 'video') {
+                demoResult.facialFindings = override.facialFindings || [];
+                demoResult.audioPct = override.audioPct;
+                demoResult.audioFindings = override.audioFindings || [];
+            }
+
+            setTimeout(() => {
+                setResult(demoResult);
+                setLoading(false);
+                // No setRefreshKey — demo scans must NOT appear in history
+            }, 500);
+            return;
+        }
+
+        // ─── Real backend flow ───
         const formData = new FormData();
         formData.append('file', file);
 
@@ -144,34 +157,265 @@ const Detector = () => {
 
     const triggerFileInput = () => fileInputRef.current?.click();
 
+    const currentMode = MODES.find(m => m.key === mode);
+
+    const globalVerdict = result
+      ? (result.__demo ? result.verdict : deriveDisplay(result).verdict)
+      : null;
+
+    /* ─── Semantic color helpers ─── */
+    const verdictBorder = (isReal) => isReal ? 'rgba(127,160,136,0.5)' : 'rgba(199,119,100,0.5)';
+    const verdictGlow = (isReal) => isReal ? 'rgba(127,160,136,0.25)' : 'rgba(199,119,100,0.25)';
+    const verdictMicBg = (isReal) => isReal ? 'rgba(127,160,136,0.1)' : 'rgba(199,119,100,0.1)';
+    const verdictMicColor = (isReal) => isReal ? 'var(--home-real)' : 'var(--home-fake)';
+
+    /* ─── Render media preview (left panel) ─── */
+    const renderUploadPreview = () => {
+        if (!preview) return null;
+
+        if (mode === 'video') {
+            return (
+                <video
+                    src={preview}
+                    className="w-full h-full object-contain p-4"
+                    style={{ maxHeight: '360px' }}
+                    controls
+                    muted
+                />
+            );
+        }
+
+        if (mode === 'audio') {
+            return (
+                <div className="flex flex-col items-center justify-center gap-4 p-8">
+                    <div className="w-20 h-20 flex items-center justify-center"
+                        style={{
+                            borderRadius: '4px',
+                            background: 'var(--home-surface)',
+                            border: '1px solid var(--home-border)',
+                        }}>
+                        <Mic size={32} style={{ color: 'var(--home-text-tertiary)' }} />
+                    </div>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--home-text-secondary)' }} className="truncate max-w-[200px]">{file?.name}</p>
+                    <div className="w-full max-w-[280px]">
+                        <AudioPlayer src={preview} verdict={globalVerdict || 'REAL'} />
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <img src={preview} alt="Preview" className="w-full h-full object-contain p-4" style={{ maxHeight: '360px' }} />
+        );
+    };
+
+    /* ─── Render enhanced result panel (right panel) ─── */
+    const renderResultPanel = () => {
+        if (!result) return null;
+
+        const findings = result.reasons && result.reasons.length > 0 ? result.reasons : [];
+
+        // Demo overrides set `verdict` and `displayPct` directly — honor them as-is.
+        // For real backend responses, re-derive verdict and percentage from
+        // human_likelihood using the 0.70 threshold (backend `label` is not reliable).
+        const isDemoOverride = result.__demo === true;
+
+        const derived = isDemoOverride
+          ? { verdict: result.verdict, displayPct: result.displayPct, displayLabel: result.verdict }
+          : deriveDisplay(result);
+
+        const displayPct = derived.displayPct;
+        const verdict = derived.verdict;
+        const isReal = verdict === 'REAL';
+
+        return (
+            <>
+                <VerdictBanner verdict={verdict} filename={file?.name} />
+
+                {/* ── IMAGE RESULTS ── */}
+                {mode === 'image' && (
+                    <>
+                        <HeatmapOverlay
+                            imageUrl={preview}
+                            verdict={verdict}
+                            confidence={result.confidence}
+                        />
+                        <FactSheetCard
+                            confidence={result.confidence}
+                            displayPct={displayPct}
+                            verdict={verdict}
+                            reportTitle="Facial Forensic Report"
+                            findings={findings}
+                            mediaType="image"
+                        />
+                    </>
+                )}
+
+                {/* ── VIDEO RESULTS ── */}
+                {mode === 'video' && (
+                    <>
+                        {/* Video player with verdict glow */}
+                        <div
+                            className="overflow-hidden mb-4 relative"
+                            style={{
+                                borderRadius: '4px',
+                                border: `1px solid ${verdictBorder(isReal)}`,
+                                boxShadow: `0 0 30px ${verdictGlow(isReal)}`,
+                            }}
+                        >
+                            <video ref={videoRef} src={preview} controls className="w-full" style={{ maxHeight: '240px' }} />
+                            {/* Face detection frame overlay — cream brackets */}
+                            <div className="absolute inset-[10%] pointer-events-none">
+                                <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2" style={{ borderColor: 'var(--home-text-primary)' }} />
+                                <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2" style={{ borderColor: 'var(--home-text-primary)' }} />
+                                <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2" style={{ borderColor: 'var(--home-text-primary)' }} />
+                                <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2" style={{ borderColor: 'var(--home-text-primary)' }} />
+                            </div>
+                        </div>
+
+                        <AnomalyWaveform file={file} verdict={verdict} confidence={result.confidence} mediaRef={videoRef} filename={file?.name} />
+
+                        <div className="grid grid-cols-1 gap-3 mb-4">
+                            <FactSheetCard
+                                confidence={result.confidence}
+                                displayPct={displayPct}
+                                verdict={verdict}
+                                reportTitle="Facial Forensic Report"
+                                findings={result.facialFindings || findings}
+                                mediaType="video"
+                            />
+                            <FactSheetCard
+                                confidence={result.confidence}
+                                displayPct={result.audioPct ?? displayPct}
+                                verdict={verdict}
+                                reportTitle="Audio Consistency Analysis"
+                                findings={result.audioFindings || []}
+                                mediaType="audio"
+                            />
+                        </div>
+
+                        <DeeperTechnicalSection title="Per-Frame Breakdown" />
+                        <DeeperTechnicalSection title="Spectral Analysis" />
+                        <DeeperTechnicalSection title="Model Confidence Trace" />
+                    </>
+                )}
+
+                {/* ── AUDIO RESULTS ── */}
+                {mode === 'audio' && (
+                    <>
+                        {/* Audio player with verdict glow */}
+                        <div
+                            className="overflow-hidden mb-4 p-6 flex flex-col items-center gap-4"
+                            style={{
+                                borderRadius: '4px',
+                                background: 'var(--home-surface)',
+                                border: `1px solid ${verdictBorder(isReal)}`,
+                                boxShadow: `0 0 30px ${verdictGlow(isReal)}`,
+                            }}
+                        >
+                            <div className="w-16 h-16 flex items-center justify-center"
+                                style={{
+                                    borderRadius: '4px',
+                                    background: verdictMicBg(isReal),
+                                }}>
+                                <Mic size={28} style={{ color: verdictMicColor(isReal) }} />
+                            </div>
+                            <AudioPlayer src={preview} audioRef={rightAudioRef} verdict={verdict} />
+                        </div>
+
+                        <AnomalyWaveform file={file} verdict={verdict} confidence={result.confidence} mediaRef={rightAudioRef} filename={file?.name} />
+
+                        <FactSheetCard
+                            confidence={result.confidence}
+                            displayPct={displayPct}
+                            verdict={verdict}
+                            reportTitle="Audio Consistency Analysis"
+                            findings={findings}
+                            mediaType="audio"
+                        />
+
+                        <div className="mt-4">
+                            <DeeperTechnicalSection title="Spectral Analysis" />
+                        </div>
+                    </>
+                )}
+            </>
+        );
+    };
+
     return (
-        <div className="max-w-6xl mx-auto px-6 py-6 animate-slide-up">
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 48px' }}>
+
+            {/* ─── Editorial Page Header ─── */}
+            <div style={{ paddingTop: '80px', paddingBottom: '40px' }}>
+                <div style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    letterSpacing: '0.2em',
+                    textTransform: 'uppercase',
+                    color: 'var(--home-text-tertiary)',
+                    marginBottom: '16px',
+                }}>
+                    ANALYSIS WORKBENCH
+                </div>
+                <h1 style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '56px',
+                    fontWeight: 400,
+                    color: 'var(--home-text-primary)',
+                    lineHeight: 1.05,
+                    letterSpacing: '-0.02em',
+                    margin: 0,
+                }}>
+                    Scan for synthetic media.
+                </h1>
+                <p style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '16px',
+                    color: 'var(--home-text-secondary)',
+                    marginTop: '16px',
+                    maxWidth: '600px',
+                }}>
+                    Upload an image, video, or audio clip to analyze for forensic markers.
+                </p>
+                <div style={{
+                    height: '1px',
+                    background: 'var(--home-border)',
+                    marginTop: '48px',
+                }} />
+            </div>
 
             {/* Stats Dashboard */}
-            <div className="mb-8">
-                <DashboardStats stats={stats} />
-            </div>
+            <DashboardStats stats={stats} />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
                 {/* Left Panel: Upload & Controls */}
-                <div className="lg:col-span-7 space-y-6">
+                <div className="lg:col-span-7 space-y-0">
 
-                    {/* Mode Selection Tabs */}
-                    <div className="surface p-1.5 flex gap-1 items-center justify-between">
+                    {/* Mode Selection Tabs — editorial */}
+                    <div style={{ display: 'flex', gap: '32px', paddingBottom: '16px' }}>
                         {MODES.map((m) => {
-                            const Icon = m.icon;
                             const isActive = mode === m.key;
                             return (
                                 <button
                                     key={m.key}
                                     onClick={() => setMode(m.key)}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${isActive
-                                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/20'
-                                        : 'text-slate-500 hover:bg-white/[0.04] hover:text-white'
-                                        }`}
+                                    className="transition-all duration-200"
+                                    style={{
+                                        position: 'relative',
+                                        padding: '8px 0',
+                                        fontSize: '15px',
+                                        fontWeight: 500,
+                                        fontFamily: 'var(--font-body)',
+                                        color: isActive ? 'var(--home-text-primary)' : 'var(--home-text-tertiary)',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        borderBottom: isActive ? '2px solid var(--home-accent)' : '2px solid transparent',
+                                        cursor: 'pointer',
+                                        textTransform: 'lowercase',
+                                    }}
                                 >
-                                    <Icon size={16} />
                                     {m.label}
                                 </button>
                             );
@@ -184,28 +428,50 @@ const Detector = () => {
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        className={`group relative surface-elevated aspect-[4/3] flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-300 ${isDragging
-                            ? 'border-indigo-500/50 bg-indigo-500/5 scale-[1.01]'
-                            : 'hover:border-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/5'
-                            }`}
-                        style={{ borderStyle: isDragging ? 'dashed' : 'solid', borderWidth: isDragging ? 2 : 1 }}
+                        className="group relative flex flex-col items-center justify-center cursor-pointer overflow-hidden"
+                        style={{
+                            background: isDragging ? 'rgba(184,166,138,0.04)' : 'var(--home-surface)',
+                            border: `1px dashed ${isDragging ? 'var(--home-accent)' : 'var(--home-border)'}`,
+                            borderRadius: '4px',
+                            minHeight: '380px',
+                            transition: 'all 0.25s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                            if (!isDragging) {
+                                e.currentTarget.style.borderColor = 'var(--home-accent)';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isDragging) {
+                                e.currentTarget.style.borderColor = 'var(--home-border)';
+                            }
+                        }}
                     >
                         <input
                             type="file"
                             ref={fileInputRef}
                             className="hidden"
-                            accept={MODES.find(m => m.key === mode)?.accept}
+                            accept={currentMode?.accept}
                             onChange={handleFileChange}
                         />
 
                         {preview ? (
                             <>
-                                <img src={preview} alt="Preview" className="w-full h-full object-contain p-4" />
+                                {renderUploadPreview()}
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
 
                                 <button
                                     onClick={resetAnalysis}
-                                    className="absolute top-4 right-4 p-2 bg-white/[0.08] backdrop-blur rounded-full text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-white/[0.1] transition-all z-10"
+                                    className="absolute top-4 right-4 p-2 transition-all z-10"
+                                    style={{
+                                        color: 'var(--home-text-secondary)',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        borderRadius: '4px',
+                                    }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--home-text-primary)')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--home-text-secondary)')}
                                 >
                                     <X size={20} />
                                 </button>
@@ -214,7 +480,25 @@ const Detector = () => {
                                     <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
                                         <button
                                             onClick={analyzeMedia}
-                                            className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/25 transform hover:-translate-y-1 transition-all duration-300"
+                                            className="flex items-center gap-2 px-8 py-3 font-semibold transition-all duration-300"
+                                            style={{
+                                                background: 'transparent',
+                                                border: '1px solid var(--home-text-primary)',
+                                                borderRadius: '4px',
+                                                color: 'var(--home-text-primary)',
+                                                fontFamily: 'var(--font-body)',
+                                                cursor: 'pointer',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.background = 'var(--home-accent)';
+                                                e.currentTarget.style.borderColor = 'var(--home-accent)';
+                                                e.currentTarget.style.color = 'var(--home-bg)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.background = 'transparent';
+                                                e.currentTarget.style.borderColor = 'var(--home-text-primary)';
+                                                e.currentTarget.style.color = 'var(--home-text-primary)';
+                                            }}
                                         >
                                             <Scan size={20} />
                                             Analyze Media
@@ -224,133 +508,182 @@ const Detector = () => {
                             </>
                         ) : (
                             <div className="text-center space-y-4 p-8">
-                                <div className={`w-20 h-20 mx-auto rounded-2xl flex items-center justify-center transition-all duration-300 ${isDragging ? 'bg-indigo-500/15 text-indigo-400' : 'bg-white/[0.04] text-slate-500 group-hover:bg-indigo-500/10 group-hover:text-indigo-400'
-                                    }`}>
-                                    <Upload size={32} strokeWidth={1.5} />
+                                <div className="mx-auto flex items-center justify-center">
+                                    <Upload size={32} style={{ color: 'var(--home-text-primary)', strokeWidth: 1.5 }} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-white">
-                                        {isDragging ? "Drop to upload" : "Upload Image"}
+                                    <h3 style={{
+                                        fontFamily: 'var(--font-body)',
+                                        fontSize: '18px',
+                                        fontWeight: 500,
+                                        color: 'var(--home-text-primary)',
+                                        marginBottom: '6px',
+                                    }}>
+                                        {isDragging ? "Drop to upload" : `Upload ${currentMode?.label || 'file'}`}
                                     </h3>
-                                    <p className="text-sm text-slate-500 mt-1 max-w-[200px] mx-auto">
-                                        Drag & drop or click to browse files
+                                    <p style={{
+                                        fontFamily: 'var(--font-body)',
+                                        color: 'var(--home-text-secondary)',
+                                        fontSize: '14px',
+                                        lineHeight: 1.7,
+                                    }}>
+                                        Drag & drop or <span style={{ color: 'var(--home-text-primary)', fontWeight: 500 }}>click</span> to browse files
                                     </p>
+                                </div>
+                                {/* Format list — middle-dot separated, no pills */}
+                                <div style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: '11px',
+                                    letterSpacing: '0.1em',
+                                    textTransform: 'uppercase',
+                                    color: 'var(--home-text-tertiary)',
+                                    marginTop: '8px',
+                                }}>
+                                    {currentMode?.formats.join(' · ')}
                                 </div>
                             </div>
                         )}
 
                         {/* Scanner Animation Overlay */}
                         {loading && (
-                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-20 flex flex-col items-center justify-center">
+                            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center"
+                                style={{ background: 'rgba(15,14,11,0.75)', backdropFilter: 'blur(4px)' }}
+                            >
                                 <div className="w-64 h-64 relative">
-                                    <div className="absolute inset-0 border-4 border-white/[0.06] rounded-full"></div>
-                                    <div className="absolute inset-0 border-t-4 border-indigo-400 rounded-full animate-spin" style={{ filter: 'drop-shadow(0 0 8px rgba(129,140,248,0.5))' }}></div>
+                                    <div className="absolute inset-0 border-4 rounded-full" style={{ borderColor: 'var(--home-border)' }}></div>
+                                    <div className="absolute inset-0 rounded-full animate-spin"
+                                        style={{
+                                            borderTop: '4px solid var(--home-accent)',
+                                            borderRight: '4px solid transparent',
+                                            borderBottom: '4px solid transparent',
+                                            borderLeft: '4px solid transparent',
+                                        }}
+                                    ></div>
                                     <div className="absolute inset-0 flex items-center justify-center flex-col">
-                                        <span className="text-4xl font-bold text-indigo-400 text-glow">{uploadProgress}%</span>
-                                        <span className="text-xs font-semibold text-indigo-300 uppercase tracking-widest mt-1">Analyzing</span>
+                                        <span style={{
+                                            fontFamily: 'var(--font-display)',
+                                            fontSize: '48px',
+                                            fontWeight: 400,
+                                            color: 'var(--home-text-primary)',
+                                        }}>{uploadProgress}%</span>
+                                        <span style={{
+                                            fontFamily: 'var(--font-mono)',
+                                            fontSize: '11px',
+                                            letterSpacing: '0.2em',
+                                            textTransform: 'uppercase',
+                                            color: 'var(--home-text-secondary)',
+                                            marginTop: '4px',
+                                        }}>Analyzing</span>
                                     </div>
                                 </div>
-                                <div className="mt-8 text-slate-400 font-medium animate-pulse">
-                                    Detecting anomalies...
+                                <div style={{
+                                    fontFamily: 'var(--font-body)',
+                                    fontSize: '14px',
+                                    color: 'var(--home-text-secondary)',
+                                    marginTop: '32px',
+                                }} className="animate-pulse">
+                                    Running inference...
                                 </div>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Right Panel: Results */}
+                {/* Right Panel: Enhanced Scan Results */}
                 <div className="lg:col-span-5 relative">
                     {result ? (
-                        <div className="surface-elevated p-8 h-full min-h-[500px] flex flex-col animate-slide-up relative overflow-hidden">
-                            {/* Decorative background bloom */}
-                            <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br rounded-full blur-[80px] opacity-20 -z-10 ${result.label === 'REAL' ? 'from-emerald-500 to-teal-400' : 'from-rose-500 to-orange-400'
-                                }`} />
+                        <div className="h-full max-h-[720px] overflow-y-auto flex flex-col"
+                            style={{
+                                background: 'var(--home-surface)',
+                                border: '1px solid var(--home-border)',
+                                borderRadius: '4px',
+                                padding: '32px',
+                            }}>
 
-                            <div className="flex items-center gap-3 mb-8">
-                                <div className={`p-2.5 rounded-lg ${result.label === 'REAL' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'
-                                    }`}>
-                                    <Activity size={24} />
+                            {/* Panel header */}
+                            <div className="mb-6">
+                                <div style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: '11px',
+                                    letterSpacing: '0.2em',
+                                    textTransform: 'uppercase',
+                                    color: 'var(--home-text-tertiary)',
+                                }}>
+                                    ENHANCED SCAN RESULTS
                                 </div>
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Analysis Report</h3>
-                                    <p className="text-xs text-slate-600">{new Date().toLocaleString()}</p>
-                                </div>
+                                <p style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: '12px',
+                                    color: 'var(--home-text-secondary)',
+                                    marginTop: '4px',
+                                }}>{new Date().toLocaleString()}</p>
+                                <div style={{ height: '1px', background: 'var(--home-border)', marginTop: '16px' }} />
                             </div>
 
-                            <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6">
-                                <ConfidenceRing percent={result.confidence} isReal={result.label === 'REAL'} size={180} />
-
-                                <div>
-                                    <h2 className="text-4xl font-bold tracking-tight mb-2 text-white">
-                                        {result.label === 'REAL' ? 'Authentic' : 'Deepfake'}
-                                    </h2>
-                                    <p className="text-slate-400 font-medium">
-                                        {result.message}
-                                    </p>
-                                </div>
-
-                                {/* Risk Gauge UI */}
-                                {(result.probability !== undefined || result.synthetic_likelihood !== undefined) && (
-                                    <div className="w-full pt-6 border-t border-white/[0.06] mt-6">
-                                        {(() => {
-                                            const riskScore = result.probability !== undefined
-                                                ? (1 - result.probability) * 100
-                                                : (result.synthetic_likelihood || 0);
-
-                                            const isDeepfake = result.label === 'FAKE';
-                                            const bannerColor = isDeepfake ? 'text-rose-400 bg-rose-500/10 border-rose-500/20' : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-                                            const bannerIcon = isDeepfake ? <AlertTriangle size={18} /> : <CheckCircle size={18} />;
-                                            const bannerText = isDeepfake ? "HIGH RISK DETECTED" : "NO ANOMALIES FOUND";
-                                            const rotation = (riskScore / 100) * 180 - 90;
-
-                                            return (
-                                                <div className="flex flex-col items-center w-full">
-                                                    {/* Status Banner */}
-                                                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-bold mb-6 ${bannerColor}`}>
-                                                        {bannerIcon}
-                                                        {bannerText}
-                                                    </div>
-
-                                                    {/* Gauge */}
-                                                    <div className="relative w-48 h-24 mb-2">
-                                                        <svg viewBox="0 0 200 110" className="w-full h-full">
-                                                            <defs>
-                                                                <linearGradient id="needleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                                    <stop offset="0%" stopColor="#94a3b8" />
-                                                                    <stop offset="100%" stopColor="#e2e8f0" />
-                                                                </linearGradient>
-                                                            </defs>
-                                                            <g fill="none" strokeWidth="16" transform="translate(0,10)" strokeLinecap="round">
-                                                                <path d="M 20 90 A 80 80 0 0 1 61.2 36.5" stroke="#34d399" />
-                                                                <path d="M 68 30 A 80 80 0 0 1 132 30" stroke="#fbbf24" />
-                                                                <path d="M 138.8 36.5 A 80 80 0 0 1 180 90" stroke="#fb7185" />
-                                                            </g>
-                                                            <g transform={`translate(100, 100) rotate(${rotation})`} className="transition-transform duration-1000 ease-out">
-                                                                <circle cx="0" cy="0" r="6" fill="#e2e8f0" />
-                                                                <path d="M -4 0 L 0 -75 L 4 0 Z" fill="#e2e8f0" />
-                                                            </g>
-                                                        </svg>
-                                                        <div className="absolute bottom-0 w-full flex justify-between px-4 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-                                                            <span>Safe</span>
-                                                            <span>Risk</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-                                    </div>
-                                )}
+                            {renderResultPanel()}
+                        </div>
+                    ) : loading ? (
+                        /* Loading state */
+                        <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-center p-8 relative overflow-hidden"
+                            style={{
+                                background: 'var(--home-surface)',
+                                border: '1px solid var(--home-border)',
+                                borderRadius: '4px',
+                            }}>
+                            {/* Progress bar top */}
+                            <div className="absolute top-0 left-0 right-0" style={{ height: '2px', background: 'var(--home-border)' }}>
+                                <div style={{
+                                    width: '40%',
+                                    height: '2px',
+                                    background: 'var(--home-accent)',
+                                    animation: 'scan-line-horizontal 1.5s linear infinite',
+                                }} />
                             </div>
+                            <div className="w-12 h-12 border-4 rounded-full animate-spin mb-4"
+                                style={{ borderColor: 'var(--home-border)', borderTopColor: 'var(--home-accent)' }} />
+                            <h3 style={{
+                                fontFamily: 'var(--font-body)',
+                                fontSize: '14px',
+                                fontWeight: 500,
+                                color: 'var(--home-text-primary)',
+                                marginBottom: '4px',
+                            }}>
+                                Analysis in Progress
+                            </h3>
+                            <p style={{
+                                fontFamily: 'var(--font-body)',
+                                color: 'var(--home-text-secondary)',
+                                fontSize: '12px',
+                            }}>
+                                Scanning for deepfake signatures...
+                            </p>
                         </div>
                     ) : (
-                        // Empty State Placeholder
-                        <div className="h-full min-h-[500px] surface border-dashed border-2 border-white/[0.08] flex flex-col items-center justify-center text-center p-8 opacity-60">
-                            <div className="w-16 h-16 bg-white/[0.04] rounded-full flex items-center justify-center text-slate-600 mb-4">
-                                <Activity size={32} />
-                            </div>
-                            <h3 className="text-white font-semibold mb-1">Ready for Analysis</h3>
-                            <p className="text-sm text-slate-500 max-w-[200px]">
-                                Upload media to generate a detailed deepfake detection report.
+                        // Empty State — editorial "Awaiting media upload"
+                        <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-center p-8 relative overflow-hidden"
+                            style={{
+                                background: 'var(--home-surface)',
+                                border: '1px solid var(--home-border)',
+                                borderRadius: '4px',
+                            }}>
+                            <h3 style={{
+                                fontFamily: 'var(--font-display)',
+                                fontStyle: 'italic',
+                                fontSize: '40px',
+                                fontWeight: 400,
+                                color: 'var(--home-text-secondary)',
+                                marginBottom: '12px',
+                                lineHeight: 1.1,
+                            }}>
+                                Awaiting media upload.
+                            </h3>
+                            <p style={{
+                                fontFamily: 'var(--font-body)',
+                                color: 'var(--home-text-tertiary)',
+                                fontSize: '14px',
+                                maxWidth: '260px',
+                            }}>
+                                Results will appear here once analysis begins.
                             </p>
                         </div>
                     )}

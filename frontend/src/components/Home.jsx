@@ -1,352 +1,1019 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Video, Mic, ArrowRight, ScanLine, Cloud, Cpu, Activity, CheckCircle, Zap, Globe, Lock } from 'lucide-react';
-import { SparklesCore } from './ui/sparkles';
+
+/* ═══════════════════════════════════════════════════════════════════
+   Home — Editorial Research Lab
+   Warm-black, serif headlines, monospace readouts, zero SaaS clichés.
+   ═══════════════════════════════════════════════════════════════════ */
 
 const Home = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [activeCase, setActiveCase] = useState(0);
-    const [audienceTab, setAudienceTab] = useState('individuals');
 
-    const activeCaseData = REAL_CASES[activeCase];
-
-    const handleStartScanning = () => {
+    const goScan = () => {
         if (user) navigate('/detect');
         else navigate('/login');
     };
 
     return (
-        <div className="flex flex-col min-h-screen text-white overflow-hidden relative selection:bg-indigo-500/30">
-
-            {/* ─── Background ─── */}
-            <div className="fixed inset-0 pointer-events-none -z-10 bg-[#0a0a0f]">
-                <div className="absolute inset-0 w-full h-full">
-                    <SparklesCore
-                        id="tsparticlesfullpage"
-                        background="transparent"
-                        minSize={0.4}
-                        maxSize={1.4}
-                        particleDensity={40}
-                        className="w-full h-full"
-                        particleColor="#818cf8"
-                    />
-                </div>
-                {/* Radial gradients for depth */}
-                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/15 blur-[150px] rounded-full"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/10 blur-[150px] rounded-full"></div>
-                <div className="absolute top-[40%] left-[50%] w-[30%] h-[30%] bg-violet-600/10 blur-[120px] rounded-full"></div>
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
-            </div>
-
+        <div
+            className="home-editorial"
+            style={{
+                backgroundColor: 'var(--home-bg)',
+                color: 'var(--home-text-primary)',
+                fontFamily: 'var(--font-body)',
+                minHeight: '100vh',
+            }}
+        >
             {/* ─── HERO ─── */}
-            <section className="relative z-10 flex flex-col items-center justify-center min-h-[90vh] text-center px-4 space-y-8 animate-slide-up pt-20">
-                <div className="max-w-4xl mx-auto space-y-8 flex flex-col items-center">
-
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.1] text-xs font-mono tracking-widest uppercase text-indigo-300 mb-2 animate-fadeIn">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        System Online V2.0
-                    </div>
-
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white drop-shadow-sm leading-[1.1]">
-                        TrueSight <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-400">AI</span>
+            <section
+                style={{
+                    minHeight: '85vh',
+                    maxWidth: '1200px',
+                    margin: '0 auto',
+                    padding: '120px 32px 80px',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '64px',
+                    alignItems: 'center',
+                }}
+                className="home-hero-grid"
+            >
+                {/* Left — Headline + prose */}
+                <div>
+                    <h1
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            fontSize: 'clamp(56px, 7vw, 108px)',
+                            fontWeight: 400,
+                            lineHeight: 1.0,
+                            letterSpacing: '-0.02em',
+                            color: 'var(--home-text-primary)',
+                            margin: 0,
+                        }}
+                    >
+                        Forensic tools for synthetic media.
                     </h1>
 
-                    <p className="text-xl md:text-2xl font-light text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                        Enterprise-grade deepfake detection for images, video, and audio.
-                        <span className="block mt-2 text-base text-slate-500">Powered by advanced forensic neural networks.</span>
+                    <p
+                        style={{
+                            marginTop: '40px',
+                            fontSize: '18px',
+                            lineHeight: 1.6,
+                            color: 'var(--home-text-secondary)',
+                            maxWidth: '520px',
+                        }}
+                    >
+                        Advanced methodologies for the{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            detection and analysis
+                        </strong>{' '}
+                        of AI-generated audio and visual content in critical sectors like{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            healthcare and media
+                        </strong>
+                        . We build rigorously{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            validated systems for truth
+                        </strong>
+                        .
                     </p>
 
-                    <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
-                        <button
-                            onClick={handleStartScanning}
-                            className="group relative inline-flex items-center justify-center h-12 px-8 font-medium text-white transition-all duration-300 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-lg hover:from-indigo-500 hover:to-violet-500 hover:-translate-y-0.5 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40"
+                    <div style={{ marginTop: '32px', display: 'flex', gap: '24px', alignItems: 'center' }}>
+                        <a
+                            onClick={(e) => { e.preventDefault(); goScan(); }}
+                            href="/detect"
+                            style={{
+                                color: 'var(--home-text-primary)',
+                                fontSize: '14px',
+                                textDecoration: 'none',
+                                fontFamily: 'var(--font-body)',
+                                cursor: 'pointer',
+                                transition: 'opacity 0.2s',
+                            }}
+                            onMouseEnter={(e) => (e.target.style.textDecoration = 'underline')}
+                            onMouseLeave={(e) => (e.target.style.textDecoration = 'none')}
                         >
-                            <span className="mr-2">Start Analysis</span>
-                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/api-docs')}
-                            className="h-12 px-8 font-medium text-slate-300 bg-white/[0.04] border border-white/[0.1] rounded-lg hover:bg-white/[0.08] hover:text-white transition-all"
+                            Start a scan →
+                        </a>
+                        <a
+                            href="#methodology"
+                            style={{
+                                color: 'var(--home-text-primary)',
+                                fontSize: '14px',
+                                textDecoration: 'underline',
+                                textUnderlineOffset: '4px',
+                                fontFamily: 'var(--font-body)',
+                            }}
                         >
-                            Documentation
-                        </button>
+                            Read the technical note
+                        </a>
                     </div>
                 </div>
 
-                {/* Hero Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-12 gap-y-8 mt-20 border-t border-white/[0.06] pt-10 w-full max-w-5xl mx-auto">
-                    <StatItem value="99.2%" label="Accuracy" />
-                    <StatItem value="<50ms" label="Latency" />
-                    <StatItem value="30+" label="Models" />
-                    <StatItem value="24/7" label="Uptime" />
-                </div>
-            </section>
-
-            {/* ─── HOW IT WORKS ─── */}
-            <section className="py-24 px-4 relative z-10">
-                <div className="max-w-6xl mx-auto">
-                    <SectionHeader title="Forensic Workflow" subtitle="How it works" />
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 relative">
-                        {/* Line */}
-                        <div className="hidden md:block absolute top-[2.5rem] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent z-0"></div>
-
-                        <StepCard
-                            number="01"
-                            title="Upload"
-                            desc="Securely upload media. Files are processed in-memory and never stored permanently without consent."
+                {/* Right — Forensic readout card */}
+                <div
+                    style={{
+                        background: 'var(--home-surface)',
+                        border: '1px solid var(--home-border)',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                    }}
+                >
+                    {/* Visual — headshot with heatmap overlay */}
+                    <div style={{ position: 'relative', height: '280px', overflow: 'hidden', background: '#111' }}>
+                        <img
+                            src="/forensic-headshot.png"
+                            alt="Subject under analysis"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                filter: 'grayscale(60%) contrast(1.1)',
+                                opacity: 0.85,
+                            }}
                         />
-                        <StepCard
-                            number="02"
-                            title="Analyze"
-                            desc="Multi-modal inspection scans for artifacts, inconsistent lighting, and spectral anomalies."
+                        {/* Heatmap overlay */}
+                        <div
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                background:
+                                    'radial-gradient(ellipse 45% 50% at 50% 38%, rgba(220, 80, 40, 0.45) 0%, rgba(220, 120, 50, 0.2) 40%, transparent 70%), ' +
+                                    'radial-gradient(ellipse 25% 20% at 42% 62%, rgba(210, 90, 50, 0.35) 0%, transparent 60%), ' +
+                                    'radial-gradient(ellipse 20% 15% at 58% 62%, rgba(210, 90, 50, 0.3) 0%, transparent 55%)',
+                                mixBlendMode: 'screen',
+                                pointerEvents: 'none',
+                            }}
                         />
-                        <StepCard
-                            number="03"
-                            title="Verify"
-                            desc="Receive a detailed authenticity report with confidence scores and explainable metrics."
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* ─── METRICS GRID ─── */}
-            <section className="py-24 px-4 relative z-10 bg-white/[0.02] border-y border-white/[0.06]">
-                <div className="max-w-6xl mx-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-10 flex flex-col items-center text-center space-y-6 hover:border-indigo-500/30 transition-all duration-300 group">
-                            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-2 border border-indigo-500/20 group-hover:animate-glow-pulse">
-                                <ScanLine size={32} />
-                            </div>
-                            <h3 className="text-5xl font-bold tracking-tight text-white">95%</h3>
-                            <div className="space-y-2 max-w-sm">
-                                <h4 className="text-lg font-medium text-slate-200">Detection Rate</h4>
-                                <p className="text-slate-500 text-sm leading-relaxed">
-                                    Achieved on FaceForensics++ and DFDC benchmarks using our ensemble transformer capability.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-10 flex flex-col items-center text-center space-y-6 hover:border-violet-500/30 transition-all duration-300 group">
-                            <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center text-violet-400 mb-2 border border-violet-500/20 group-hover:animate-glow-pulse">
-                                <Cpu size={32} />
-                            </div>
-                            <h3 className="text-5xl font-bold tracking-tight text-white">Neural</h3>
-                            <div className="space-y-2 max-w-sm">
-                                <h4 className="text-lg font-medium text-slate-200">Processing Core</h4>
-                                <p className="text-slate-500 text-sm leading-relaxed">
-                                    Real-time analysis of spatial artifacts, temporal inconsistencies, and audio spectral patterns.
-                                </p>
-                            </div>
+                        {/* Corner brackets */}
+                        <div style={{ position: 'absolute', inset: '12%', pointerEvents: 'none' }}>
+                            {/* Top-left */}
+                            <div style={{ position: 'absolute', top: 0, left: 0, width: 24, height: 24, borderTop: '2px solid var(--home-text-primary)', borderLeft: '2px solid var(--home-text-primary)', opacity: 0.6 }} />
+                            {/* Top-right */}
+                            <div style={{ position: 'absolute', top: 0, right: 0, width: 24, height: 24, borderTop: '2px solid var(--home-text-primary)', borderRight: '2px solid var(--home-text-primary)', opacity: 0.6 }} />
+                            {/* Bottom-left */}
+                            <div style={{ position: 'absolute', bottom: 0, left: 0, width: 24, height: 24, borderBottom: '2px solid var(--home-text-primary)', borderLeft: '2px solid var(--home-text-primary)', opacity: 0.6 }} />
+                            {/* Bottom-right */}
+                            <div style={{ position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderBottom: '2px solid var(--home-text-primary)', borderRight: '2px solid var(--home-text-primary)', opacity: 0.6 }} />
                         </div>
                     </div>
-                </div>
-            </section>
 
-            {/* ─── FEATURES ─── */}
-            <section className="py-24 px-4">
-                <div className="max-w-6xl mx-auto">
-                    <SectionHeader title="Detection Capabilities" subtitle="Features" />
+                    {/* Data readout — inverted cream */}
+                    <div style={{ background: '#E8E3D6', padding: '16px 20px' }}>
+                        <div
+                            style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: '12px',
+                                color: '#0F0E0B',
+                                lineHeight: 1.9,
+                                letterSpacing: '0.04em',
+                            }}
+                        >
+                            <ReadoutRow label="ANALYSIS ID" value="TS-2024-094-A" />
+                            <ReadoutRow label="MEDIA TYPE" value="VIDEO" />
+                            <ReadoutRow label="FRAME COUNT" value="1248" />
+                            <ReadoutRow label="DETECTION STATUS" value="SYNTHETIC" valueColor="var(--home-fake)" />
+                        </div>
+                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-                        <FeatureCard
-                            icon={Mic}
-                            title="Audio Analysis"
-                            desc="Detects voice cloning, robotic artifacts, and background noise inconsistencies."
-                        />
-                        <FeatureCard
-                            icon={Video}
-                            title="Visual Forensics"
-                            desc="Analyzes frame-by-frame anomalies, unnatural blinking, and face warping."
-                        />
-                        <FeatureCard
-                            icon={Activity}
-                            title="Live Monitoring"
-                            desc="Real-time stream analysis API for enterprise security applications."
-                        />
-                        <FeatureCard
-                            icon={Shield}
-                            title="API Integration"
-                            desc="Restful API access for seamless integration into your existing platforms."
-                        />
-                        <FeatureCard
-                            icon={Globe}
-                            title="Global Threat Intel"
-                            desc="Continuously updated models based on the latest deepfake generation techniques."
-                        />
-                        <FeatureCard
-                            icon={Lock}
-                            title="Privacy First"
-                            desc="Zero-retention policy options. Your data remains yours, always."
-                        />
+                    {/* Verdict band */}
+                    <div style={{ background: '#DDD6C4', padding: '16px 20px' }}>
+                        <span
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '36px',
+                                fontWeight: 400,
+                                color: 'var(--home-fake)',
+                                letterSpacing: '-0.01em',
+                            }}
+                        >
+                            0.94 FAKE
+                        </span>
+                    </div>
+
+                    {/* Probability readout */}
+                    <div style={{ background: '#E8E3D6', padding: '14px 20px 18px' }}>
+                        <div
+                            style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: '12px',
+                                color: '#0F0E0B',
+                                lineHeight: 1.9,
+                                letterSpacing: '0.04em',
+                            }}
+                        >
+                            <ReadoutRow label="FACE SWAP PROBABILITY" value="89%" />
+                            <ReadoutRow label="VOICE CLONE PROBABILITY" value="92%" />
+                            <ReadoutRow label="LIP SYNC INCONSISTENCY" value="HIGH" valueColor="var(--home-fake)" />
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* ─── REAL CASES ─── */}
-            <section className="py-24 px-4 relative bg-white/[0.02] border-y border-white/[0.06]">
-                <div className="max-w-5xl mx-auto">
-                    <SectionHeader title="Threat Landscape" subtitle="Real World Cases" />
+            {/* ─── TECHNICAL NOTE ─── */}
+            <section
+                id="technical-note"
+                style={{
+                    maxWidth: '1200px',
+                    margin: '0 auto',
+                    padding: '120px 32px',
+                    display: 'grid',
+                    gridTemplateColumns: '280px 1fr',
+                    gap: '80px',
+                }}
+                className="home-tech-grid"
+            >
+                {/* Left — sticky heading */}
+                <div className="home-sticky-heading" style={{ position: 'sticky', top: '120px', alignSelf: 'start' }}>
+                    <h2
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            fontSize: '40px',
+                            fontWeight: 400,
+                            lineHeight: 1.05,
+                            color: 'var(--home-text-primary)',
+                            margin: 0,
+                        }}
+                    >
+                        How TrueSight detects synthetic media
+                    </h2>
+                </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-12">
-                        {/* List */}
-                        <div className="lg:col-span-4 space-y-2">
-                            {REAL_CASES.map((item, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => setActiveCase(idx)}
-                                    className={`w-full text-left p-4 rounded-xl transition-all duration-200 border flex items-center gap-3 ${activeCase === idx
-                                        ? 'bg-indigo-500/10 border-indigo-500/30 text-white shadow-sm shadow-indigo-500/10'
-                                        : 'bg-transparent border-transparent hover:bg-white/[0.03] text-slate-500 hover:text-white'
-                                        }`}
+                {/* Right — prose */}
+                <div style={{ maxWidth: '720px' }}>
+                    <p
+                        style={{
+                            fontSize: '17px',
+                            lineHeight: 1.7,
+                            color: 'var(--home-text-secondary)',
+                            marginBottom: '28px',
+                        }}
+                    >
+                        TrueSight AI leverages an ensemble of deep learning models specialized in identifying
+                        digital forgeries. Our approach moves beyond single-frame analysis, incorporating{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            temporal consistency
+                        </strong>{' '}
+                        checks that examine{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            frame-by-frame transitions for artifacts
+                        </strong>
+                        . This includes scrutinizing{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            subtle anomalies in blinking patterns, gaze direction
+                        </strong>
+                        , and{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            facial muscle movements
+                        </strong>{' '}
+                        that are challenging for current{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            generative AI
+                        </strong>{' '}
+                        to replicate accurately.
+                    </p>
+
+                    <p
+                        style={{
+                            fontSize: '17px',
+                            lineHeight: 1.7,
+                            color: 'var(--home-text-secondary)',
+                            marginBottom: '28px',
+                        }}
+                    >
+                        For audio, we utilize{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            spectral analysis
+                        </strong>{' '}
+                        and{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            voiceprints
+                        </strong>{' '}
+                        to detect{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            robotic vocal patterns
+                        </strong>{' '}
+                        and{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            background noise inconsistencies
+                        </strong>
+                        .
+                    </p>
+
+                    <p
+                        style={{
+                            fontSize: '17px',
+                            lineHeight: 1.7,
+                            color: 'var(--home-text-secondary)',
+                        }}
+                    >
+                        Our systems are trained on a diverse and constantly updated dataset, including proprietary
+                        synthetic media, ensuring high-fidelity detection against evolving threats. Our validation
+                        process achieves an{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            87.6% accuracy
+                        </strong>{' '}
+                        on challenging benchmarks like{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            FaceForensics++ and DFDC
+                        </strong>
+                        . Data handling is governed by strict privacy protocols.
+                    </p>
+                </div>
+            </section>
+
+            {/* ─── CASE STUDY ─── */}
+            <section
+                style={{
+                    maxWidth: '900px',
+                    margin: '0 auto',
+                    padding: '120px 32px',
+                }}
+            >
+                <span
+                    style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '11px',
+                        letterSpacing: '0.2em',
+                        textTransform: 'uppercase',
+                        color: 'var(--home-text-tertiary)',
+                        display: 'block',
+                        marginBottom: '20px',
+                    }}
+                >
+                    Case Study · 2024
+                </span>
+
+                <h2
+                    style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: 'clamp(32px, 4vw, 48px)',
+                        fontWeight: 400,
+                        lineHeight: 1.1,
+                        color: 'var(--home-text-primary)',
+                        maxWidth: '780px',
+                        margin: '0 0 40px 0',
+                    }}
+                >
+                    The Hyderabad voice-clone incident: why clinics should care
+                </h2>
+
+                {/* Blockquote */}
+                <div
+                    style={{
+                        borderLeft: '2px solid var(--home-accent)',
+                        paddingLeft: '24px',
+                        maxWidth: '680px',
+                        marginBottom: '16px',
+                    }}
+                >
+                    <p
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            fontStyle: 'italic',
+                            fontSize: '24px',
+                            lineHeight: 1.4,
+                            color: 'var(--home-text-secondary)',
+                            margin: 0,
+                        }}
+                    >
+                        "A woman lost approximately ₹1,38,000 to a scammer using AI to mimic her nephew's voice,
+                        claiming an emergency. The audio was convincing enough that standard verification failed."
+                    </p>
+                </div>
+
+                <p
+                    style={{
+                        fontSize: '13px',
+                        color: 'var(--home-text-tertiary)',
+                        fontFamily: 'var(--font-body)',
+                        paddingLeft: '26px',
+                        marginBottom: '32px',
+                    }}
+                >
+                    — Times of India, 2024
+                </p>
+
+                <a
+                    href="/research/voice-clone-hyderabad"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        // Stub route — "Coming soon" page can be added later
+                        alert('Research article coming soon.');
+                    }}
+                    style={{
+                        color: 'var(--home-text-primary)',
+                        fontSize: '14px',
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => (e.target.style.textDecoration = 'underline')}
+                    onMouseLeave={(e) => (e.target.style.textDecoration = 'none')}
+                >
+                    Read the full analysis →
+                </a>
+            </section>
+
+            {/* ─── SECTION DIVIDER ─── */}
+            <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 48px' }}>
+                <div style={{ height: '1px', background: 'var(--home-border)' }} />
+            </div>
+
+            {/* ─── PERFORMANCE ─── */}
+            <section
+                id="performance"
+                style={{
+                    maxWidth: '1100px',
+                    margin: '0 auto',
+                    padding: '120px 48px 80px',
+                    display: 'grid',
+                    gridTemplateColumns: '280px 1fr',
+                    gap: '80px',
+                }}
+                className="home-perf-grid"
+            >
+                {/* Left — heading */}
+                <div>
+                    <span
+                        style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '11px',
+                            letterSpacing: '0.2em',
+                            textTransform: 'uppercase',
+                            color: 'var(--home-text-tertiary)',
+                            display: 'block',
+                            marginBottom: '20px',
+                        }}
+                    >
+                        Performance
+                    </span>
+                    <h2
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            fontSize: '40px',
+                            fontWeight: 400,
+                            lineHeight: 1.05,
+                            color: 'var(--home-text-primary)',
+                            margin: 0,
+                        }}
+                    >
+                        Validated on adversarial benchmarks.
+                    </h2>
+                </div>
+
+                {/* Right — 2×2 metrics grid */}
+                <div>
+                    <div
+                        className="home-metrics-grid"
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            borderTop: '1px solid var(--home-border)',
+                            borderLeft: '1px solid var(--home-border)',
+                        }}
+                    >
+                        {[
+                            { number: '87.6%', label: 'VALIDATION ACCURACY' },
+                            { number: '0.80',  label: 'F1 SCORE' },
+                            { number: '0.89',  label: 'ROC-AUC' },
+                            { number: '~6%',   label: 'GENERALIZATION GAP' },
+                        ].map((m, i) => (
+                            <div
+                                key={i}
+                                style={{
+                                    padding: '32px',
+                                    borderRight: '1px solid var(--home-border)',
+                                    borderBottom: '1px solid var(--home-border)',
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        fontFamily: 'var(--font-display)',
+                                        fontSize: '56px',
+                                        fontWeight: 400,
+                                        color: 'var(--home-text-primary)',
+                                        lineHeight: 1.0,
+                                        letterSpacing: '-0.02em',
+                                    }}
                                 >
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${activeCase === idx ? 'bg-indigo-500/20 text-indigo-400' : 'bg-white/[0.05] text-slate-500'}`}>
-                                        <item.icon size={14} />
-                                    </div>
-                                    <span className="font-medium text-sm line-clamp-1">{item.title}</span>
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Content */}
-                        <div className="lg:col-span-8">
-                            <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl h-full min-h-[300px] overflow-hidden group transition-all hover:border-indigo-500/20"
-                                style={{ boxShadow: '0 4px 30px rgba(0,0,0,0.3)' }}>
-                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent"></div>
-                                <div className="relative h-full p-8 flex flex-col justify-end z-10">
-                                    <div className="mb-auto p-3 bg-white/[0.06] w-fit rounded-xl border border-white/[0.1]">
-                                        <activeCaseData.icon size={24} className="text-indigo-400" />
-                                    </div>
-
-                                    <h3 className="text-2xl font-bold mb-3 mt-8 text-white">{activeCaseData.fullTitle}</h3>
-                                    <p className="text-slate-400 leading-relaxed mb-6 border-l-2 border-indigo-500/40 pl-4">
-                                        {activeCaseData.desc}
-                                    </p>
-                                    <a
-                                        href={activeCaseData.link || "#"}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
-                                    >
-                                        Read Analysis <ArrowRight size={14} />
-                                    </a>
+                                    {m.number}
+                                </div>
+                                <div
+                                    style={{
+                                        fontFamily: 'var(--font-mono)',
+                                        fontSize: '11px',
+                                        letterSpacing: '0.2em',
+                                        textTransform: 'uppercase',
+                                        color: 'var(--home-text-tertiary)',
+                                        marginTop: '12px',
+                                    }}
+                                >
+                                    {m.label}
                                 </div>
                             </div>
-                        </div>
+                        ))}
                     </div>
+
+                    <p
+                        style={{
+                            fontFamily: 'var(--font-body)',
+                            fontSize: '14px',
+                            lineHeight: 1.7,
+                            color: 'var(--home-text-secondary)',
+                            marginTop: '24px',
+                            maxWidth: '600px',
+                        }}
+                    >
+                        Measured against standard deepfake detection benchmarks including FaceForensics++ and DFDC.
+                        Generalization gap measured as the difference between training and validation performance.
+                    </p>
                 </div>
             </section>
 
-            {/* ─── FOOTER CTA ─── */}
-            <section className="py-24 px-4 text-center relative overflow-hidden">
-                <div className="max-w-2xl mx-auto relative z-10">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-6 tracking-tight text-white">Ready to secure your media?</h2>
-                    <p className="text-lg text-slate-400 mb-10">
-                        Join thousands of organizations using TrueSight AI to detect synthetic manipulation.
-                    </p>
-                    <button
-                        onClick={handleStartScanning}
-                        className="px-10 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-lg hover:from-indigo-500 hover:to-violet-500 transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5"
+            {/* ─── SECTION DIVIDER ─── */}
+            <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 48px' }}>
+                <div style={{ height: '1px', background: 'var(--home-border)' }} />
+            </div>
+
+            {/* ─── METHODOLOGY ─── */}
+            <section
+                id="methodology"
+                style={{
+                    maxWidth: '900px',
+                    margin: '0 auto',
+                    padding: '120px 48px 80px',
+                }}
+            >
+                <span
+                    style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '11px',
+                        letterSpacing: '0.2em',
+                        textTransform: 'uppercase',
+                        color: 'var(--home-text-tertiary)',
+                        display: 'block',
+                        marginBottom: '20px',
+                    }}
+                >
+                    Methodology
+                </span>
+                <h2
+                    style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '48px',
+                        fontWeight: 400,
+                        lineHeight: 1.05,
+                        color: 'var(--home-text-primary)',
+                        margin: '0 0 32px 0',
+                    }}
+                >
+                    A four-stage pipeline.
+                </h2>
+
+                {/* Pipeline stages */}
+                <div>
+                    {[
+                        {
+                            num: '01',
+                            title: 'Ingestion',
+                            desc: 'Media is uploaded through the web interface and read as raw bytes. Images, video, and audio are all routed through a unified entry point.',
+                        },
+                        {
+                            num: '02',
+                            title: 'Preprocessing',
+                            desc: 'Images are resized to 380×380 and normalized against ImageNet statistics before conversion into tensor form. For audio and video, additional temporal and spectral features are extracted.',
+                        },
+                        {
+                            num: '03',
+                            title: 'Inference',
+                            desc: 'The tensor is passed through a fine-tuned EfficientNet-B4 convolutional network with a custom classifier head (1792 → 256 → 1). The model returns a sigmoid probability.',
+                        },
+                        {
+                            num: '04',
+                            title: 'Classification',
+                            desc: 'The probability is compared against a 0.70 decision threshold. The system returns a verdict, a confidence score, and supporting metadata for downstream review.',
+                        },
+                    ].map((stage, i, arr) => (
+                        <div key={stage.num}>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    gap: '32px',
+                                    padding: '48px 0',
+                                }}
+                                className="home-pipeline-stage"
+                            >
+                                <div
+                                    style={{
+                                        fontFamily: 'var(--font-display)',
+                                        fontSize: '40px',
+                                        fontWeight: 400,
+                                        color: 'var(--home-text-tertiary)',
+                                        lineHeight: 1,
+                                        flexShrink: 0,
+                                        width: '56px',
+                                    }}
+                                >
+                                    {stage.num}
+                                </div>
+                                <div>
+                                    <h3
+                                        style={{
+                                            fontFamily: 'var(--font-body)',
+                                            fontSize: '18px',
+                                            fontWeight: 500,
+                                            color: 'var(--home-text-primary)',
+                                            margin: '0 0 8px 0',
+                                        }}
+                                    >
+                                        {stage.title}
+                                    </h3>
+                                    <p
+                                        style={{
+                                            fontFamily: 'var(--font-body)',
+                                            fontSize: '15px',
+                                            lineHeight: 1.6,
+                                            color: 'var(--home-text-secondary)',
+                                            maxWidth: '640px',
+                                            margin: 0,
+                                        }}
+                                    >
+                                        {stage.desc}
+                                    </p>
+                                </div>
+                            </div>
+                            {i < arr.length - 1 && (
+                                <div style={{ height: '1px', background: 'var(--home-border)' }} />
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* ─── SECTION DIVIDER ─── */}
+            <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 48px' }}>
+                <div style={{ height: '1px', background: 'var(--home-border)' }} />
+            </div>
+
+            {/* ─── CAPABILITIES ─── */}
+            <section
+                style={{
+                    maxWidth: '1100px',
+                    margin: '0 auto',
+                    padding: '80px 48px',
+                }}
+            >
+                <span
+                    style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '11px',
+                        letterSpacing: '0.2em',
+                        textTransform: 'uppercase',
+                        color: 'var(--home-text-tertiary)',
+                        display: 'block',
+                        marginBottom: '16px',
+                    }}
+                >
+                    Capabilities
+                </span>
+                <h2
+                    style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '32px',
+                        fontWeight: 400,
+                        lineHeight: 1.1,
+                        color: 'var(--home-text-primary)',
+                        margin: '0 0 32px 0',
+                    }}
+                >
+                    Built for real-time forensic review.
+                </h2>
+
+                <div
+                    className="home-capabilities-row"
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr 1fr',
+                        gap: '0',
+                    }}
+                >
+                    {[
+                        {
+                            title: 'Real-time prediction',
+                            desc: 'Synchronous inference with confidence scoring on every upload.',
+                        },
+                        {
+                            title: 'Threshold-based classification',
+                            desc: 'Calibrated 0.70 decision boundary informed by validation ROC analysis.',
+                        },
+                        {
+                            title: 'Analytics dashboard',
+                            desc: 'Historical verdict distribution, confidence trends, and per-model breakdowns.',
+                        },
+                    ].map((item, i) => (
+                        <div
+                            key={i}
+                            style={{
+                                padding: '0 32px',
+                                borderLeft: i > 0 ? '1px solid var(--home-border)' : 'none',
+                            }}
+                        >
+                            <h3
+                                style={{
+                                    fontFamily: 'var(--font-body)',
+                                    fontSize: '15px',
+                                    fontWeight: 500,
+                                    color: 'var(--home-text-primary)',
+                                    margin: '0 0 6px 0',
+                                }}
+                            >
+                                {item.title}
+                            </h3>
+                            <p
+                                style={{
+                                    fontFamily: 'var(--font-body)',
+                                    fontSize: '14px',
+                                    lineHeight: 1.6,
+                                    color: 'var(--home-text-secondary)',
+                                    margin: 0,
+                                }}
+                            >
+                                {item.desc}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* ─── SECTION DIVIDER ─── */}
+            <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 48px' }}>
+                <div style={{ height: '1px', background: 'var(--home-border)' }} />
+            </div>
+
+            {/* ─── ACKNOWLEDGEMENTS ─── */}
+            <section
+                id="acknowledgements"
+                style={{
+                    maxWidth: '1100px',
+                    margin: '0 auto',
+                    padding: '120px 48px 80px',
+                    display: 'grid',
+                    gridTemplateColumns: '280px 1fr',
+                    gap: '80px',
+                }}
+                className="home-ack-grid"
+            >
+                {/* Left — heading */}
+                <div>
+                    <span
+                        style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '11px',
+                            letterSpacing: '0.2em',
+                            textTransform: 'uppercase',
+                            color: 'var(--home-text-tertiary)',
+                            display: 'block',
+                            marginBottom: '20px',
+                        }}
                     >
-                        Launch Detector
-                    </button>
+                        Acknowledgements
+                    </span>
+                    <h2
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            fontSize: '40px',
+                            fontWeight: 400,
+                            lineHeight: 1.05,
+                            color: 'var(--home-text-primary)',
+                            margin: 0,
+                        }}
+                    >
+                        Research context.
+                    </h2>
                 </div>
 
-                {/* Glow */}
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+                {/* Right — prose */}
+                <div style={{ maxWidth: '720px' }}>
+                    <p
+                        style={{
+                            fontFamily: 'var(--font-body)',
+                            fontSize: '16px',
+                            lineHeight: 1.7,
+                            color: 'var(--home-text-secondary)',
+                            marginBottom: '24px',
+                        }}
+                    >
+                        This work was developed as part of the{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            Pinnacle 6
+                        </strong>{' '}
+                        capstone project at the{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            Atlas SkillTech University (uGDX School of Technology)
+                        </strong>
+                        , Mumbai. The goal was to build and deploy an end-to-end deepfake detection system
+                        that could be used in real-world clinical and media contexts.
+                    </p>
+
+                    <p
+                        style={{
+                            fontFamily: 'var(--font-body)',
+                            fontSize: '16px',
+                            lineHeight: 1.7,
+                            color: 'var(--home-text-secondary)',
+                            marginBottom: '24px',
+                        }}
+                    >
+                        Project guidance was provided by{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            Prof. Yogesh Jadhav
+                        </strong>{' '}
+                        and{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            Kunal Meher
+                        </strong>
+                        . Development was a collaborative effort between{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            Vedant Shah
+                        </strong>
+                        ,{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            Rashil Shah
+                        </strong>
+                        , and{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            Vedant Shetty
+                        </strong>
+                        .
+                    </p>
+
+                    <p
+                        style={{
+                            fontFamily: 'var(--font-body)',
+                            fontSize: '16px',
+                            lineHeight: 1.7,
+                            color: 'var(--home-text-secondary)',
+                            marginBottom: '32px',
+                        }}
+                    >
+                        The detection model builds on the EfficientNet-B4 architecture with custom training
+                        against adversarial deepfake datasets. Source code and training notebooks are
+                        available on{' '}
+                        <strong style={{ color: 'var(--home-text-primary)', fontWeight: 600 }}>
+                            GitHub
+                        </strong>
+                        .
+                    </p>
+
+                    {/* Resource line */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '32px',
+                            flexWrap: 'wrap',
+                        }}
+                    >
+                        <a
+                            href="https://github.com/Vedantshah16/DeefakeDetection"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                                fontFamily: 'var(--font-body)',
+                                fontSize: '14px',
+                                color: 'var(--home-text-primary)',
+                                textDecoration: 'underline',
+                                textUnderlineOffset: '4px',
+                                transition: 'color 0.2s',
+                            }}
+                            onMouseEnter={(e) => (e.target.style.color = 'var(--home-accent)')}
+                            onMouseLeave={(e) => (e.target.style.color = 'var(--home-text-primary)')}
+                        >
+                            GitHub repository →
+                        </a>
+                        <span
+                            style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: '12px',
+                                color: 'var(--home-text-tertiary)',
+                                letterSpacing: '0.04em',
+                            }}
+                        >
+                            Python · PyTorch · OpenCV · NumPy · React · FastAPI
+                        </span>
+                    </div>
+                </div>
             </section>
 
             {/* ─── FOOTER ─── */}
-            <footer className="border-t border-white/[0.06] py-12 text-slate-500 text-sm">
-                <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
-                            <Shield size={12} className="text-white" />
-                        </div>
-                        <span className="font-semibold text-white tracking-wide">TrueSight AI</span>
-                    </div>
-                    <div className="flex gap-8">
-                        {[
-                            { label: 'Privacy', path: '/privacy' },
-                            { label: 'Terms', path: '/terms' },
-                            { label: 'API', path: '/api-docs' },
-                            { label: 'Status', path: '/status' }
-                        ].map(link => (
-                            <Link key={link.label} to={link.path} className="hover:text-indigo-400 transition-colors">{link.label}</Link>
-                        ))}
-                    </div>
-                    <div className="text-slate-600">© 2024 TrueSight AI</div>
+            <footer
+                style={{
+                    borderTop: '1px solid var(--home-border)',
+                    padding: '40px 32px',
+                    maxWidth: '1200px',
+                    margin: '128px auto 0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '16px',
+                }}
+                className="home-footer"
+            >
+                <span
+                    style={{
+                        fontSize: '13px',
+                        color: 'var(--home-text-tertiary)',
+                        fontFamily: 'var(--font-body)',
+                    }}
+                >
+                    TrueSight AI — Built on EfficientNet-B4 · Pinnacle6 Project · 2026
+                </span>
+
+                <div style={{ display: 'flex', gap: '24px' }}>
+                    {['Privacy', 'Methods', 'Contact'].map((label) => (
+                        <a
+                            key={label}
+                            href={`/${label.toLowerCase()}`}
+                            style={{
+                                fontSize: '13px',
+                                color: 'var(--home-text-tertiary)',
+                                textDecoration: 'none',
+                                fontFamily: 'var(--font-body)',
+                                transition: 'color 0.2s',
+                            }}
+                            onMouseEnter={(e) => (e.target.style.color = 'var(--home-text-primary)')}
+                            onMouseLeave={(e) => (e.target.style.color = 'var(--home-text-tertiary)')}
+                        >
+                            {label}
+                        </a>
+                    ))}
                 </div>
             </footer>
+
+            {/* ─── Responsive overrides ─── */}
+            <style>{`
+                .home-editorial a { transition: opacity 0.2s ease; }
+                .home-editorial strong { font-weight: 600; }
+
+                @media (max-width: 768px) {
+                    .home-hero-grid {
+                        grid-template-columns: 1fr !important;
+                        padding-top: 80px !important;
+                        min-height: auto !important;
+                        gap: 40px !important;
+                    }
+                    .home-tech-grid,
+                    .home-perf-grid,
+                    .home-ack-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 32px !important;
+                    }
+                    .home-sticky-heading {
+                        position: static !important;
+                    }
+                    .home-metrics-grid {
+                        grid-template-columns: 1fr !important;
+                    }
+                    .home-capabilities-row {
+                        grid-template-columns: 1fr !important;
+                        gap: 24px !important;
+                    }
+                    .home-capabilities-row > div {
+                        border-left: none !important;
+                        padding-left: 0 !important;
+                        padding-top: 24px;
+                        border-top: 1px solid var(--home-border);
+                    }
+                    .home-capabilities-row > div:first-child {
+                        border-top: none;
+                        padding-top: 0;
+                    }
+                    .home-pipeline-stage {
+                        gap: 16px !important;
+                    }
+                }
+
+                @media (max-width: 640px) {
+                    .home-footer {
+                        flex-direction: column !important;
+                        align-items: flex-start !important;
+                        gap: 12px !important;
+                    }
+                }
+            `}</style>
         </div>
     );
 };
 
-// --- Subcomponents ---
-
-const StatItem = ({ value, label }) => (
-    <div className="flex flex-col items-center">
-        <span className="text-3xl font-bold text-white tracking-tight">{value}</span>
-        <span className="text-xs text-slate-500 uppercase tracking-widest mt-1 font-bold">{label}</span>
+/* ─── Readout row helper ─── */
+const ReadoutRow = ({ label, value, valueColor }) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <span>{label}:</span>
+        <span style={{ color: valueColor || '#0F0E0B', fontWeight: 500 }}>{value}</span>
     </div>
 );
-
-const SectionHeader = ({ title, subtitle }) => (
-    <div className="text-center space-y-3 mb-12">
-        <h3 className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 font-mono font-bold tracking-widest uppercase text-xs">{subtitle}</h3>
-        <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{title}</h2>
-    </div>
-);
-
-const FeatureCard = ({ icon: Icon, title, desc }) => (
-    <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 hover:bg-white/[0.05] hover:border-indigo-500/20 transition-all duration-300 group">
-        <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4 text-indigo-400 group-hover:shadow-lg group-hover:shadow-indigo-500/10 transition-all">
-            <Icon size={20} />
-        </div>
-        <h3 className="text-lg font-bold mb-2 text-white">{title}</h3>
-        <p className="text-slate-500 leading-relaxed text-sm">
-            {desc}
-        </p>
-    </div>
-);
-
-const StepCard = ({ number, title, desc }) => (
-    <div className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-8 flex flex-col items-center text-center space-y-4 z-10 hover:-translate-y-1 transition-all duration-300 hover:border-indigo-500/20"
-        style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
-        <div className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-lg font-bold text-indigo-400 mb-2">
-            {number}
-        </div>
-        <h3 className="text-lg font-bold text-white">{title}</h3>
-        <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
-    </div>
-);
-
-// --- Data ---
-const REAL_CASES = [
-    {
-        title: "Voice Cloning Scam",
-        fullTitle: "Hydrabad Voice Clone Scam",
-        desc: "A woman lost ~$1,688 USD to a scammer using AI to mimic her nephew's voice, claiming an emergency.",
-        link: "https://www.indiatoday.in/technology/news/story/he-sounded-exactly-like-my-nephew-woman-loses-rs-14-lakh-in-ai-voice-scam-2463939-2023-11-17",
-        icon: Mic
-    },
-    {
-        title: "Deepfake CFO Fraud",
-        fullTitle: "$25M Deepfake Conference Call",
-        desc: "A multinational firm lost $25M after an employee was tricked by a deepfake video call of their CFO.",
-        link: "https://www.cnn.com/2024/02/04/asia/deepfake-cfo-scam-hong-kong-intl-hnk/index.html",
-        icon: Video
-    },
-    {
-        title: "Virtual Kidnapping",
-        fullTitle: "AI Virtual Kidnapping",
-        desc: "Parents hearing their children's cloned voices pleading for help in terrifying extortion schemes.",
-        link: "https://www.cnn.com/2023/04/29/us/ai-scam-calls-kidnapping-cec/index.html",
-        icon: ScanLine
-    }
-];
 
 export default Home;

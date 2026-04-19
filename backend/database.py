@@ -57,6 +57,45 @@ def init_db():
         except sqlite3.OperationalError:
             pass # Column likely exists
 
+        # Phase 2: Firebase auth migration — add columns to users table
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN firebase_uid TEXT")
+            conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_firebase_uid ON users(firebase_uid)")
+            logger.info("Added firebase_uid column to users")
+        except sqlite3.OperationalError:
+            pass  # Column likely exists
+
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN email TEXT")
+            logger.info("Added email column to users")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN phone TEXT")
+            logger.info("Added phone column to users")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'password'")
+            logger.info("Added auth_provider column to users")
+        except sqlite3.OperationalError:
+            pass
+
+        # Phase 3: Display name & Photo URL
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN display_name TEXT")
+            logger.info("Added display_name column to users")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN photo_url TEXT")
+            logger.info("Added photo_url column to users")
+        except sqlite3.OperationalError:
+            pass
+
         logger.info("Database initialized successfully.")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
@@ -242,5 +281,76 @@ def get_user_by_username(username):
     except Exception as e:
         logger.error(f"Error getting user: {e}")
         return None
+    finally:
+        conn.close()
+
+def get_user_by_firebase_uid(firebase_uid):
+    """Get user by Firebase UID."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.execute("SELECT * FROM users WHERE firebase_uid = ?", (firebase_uid,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+        return None
+    except Exception as e:
+        logger.error(f"Error getting user by firebase_uid: {e}")
+        return None
+    finally:
+        conn.close()
+
+def create_firebase_user(username, firebase_uid, email, phone, auth_provider, display_name=None, photo_url=None):
+    """
+    Create a new user that authenticated via Firebase (Google or Phone).
+    """
+    conn = get_db_connection()
+    try:
+        unusable_hash = "!firebase!"
+        conn.execute(
+            """
+            INSERT INTO users (username, password_hash, firebase_uid, email, phone, auth_provider, display_name, photo_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (username, unusable_hash, firebase_uid, email, phone, auth_provider, display_name, photo_url)
+        )
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError as e:
+        logger.error(f"IntegrityError creating Firebase user: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Error creating Firebase user: {e}")
+        return False
+    finally:
+        conn.close()
+
+def update_firebase_user_profile(firebase_uid, display_name, photo_url):
+    """
+    Update display_name and photo_url for an existing Firebase user.
+    """
+    conn = get_db_connection()
+    try:
+        updates = []
+        params = []
+        if display_name is not None:
+            updates.append("display_name = ?")
+            params.append(display_name)
+        if photo_url is not None:
+            updates.append("photo_url = ?")
+            params.append(photo_url)
+
+        if not updates:
+            return True
+
+        params.append(firebase_uid)
+        conn.execute(
+            f"UPDATE users SET {', '.join(updates)} WHERE firebase_uid = ?",
+            params
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        logger.error(f"Error updating Firebase user profile: {e}")
+        return False
     finally:
         conn.close()

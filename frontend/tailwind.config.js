@@ -46,7 +46,7 @@ export default {
             animation: {
                 'slide-up': 'slideUp 0.5s ease-out forwards',
                 'fade-in': 'fadeIn 0.5s ease-out forwards',
-                'pulse-slow': 'pulse 3s infinite',
+                'pulse-slow': 'pulseSlow 3s ease-in-out infinite',
                 'gradient-xy': 'gradient-xy 15s ease infinite',
                 'scan': 'scanLine 2s ease-in-out infinite',
                 'shimmer': 'shimmer 2s ease-in-out infinite',
@@ -102,6 +102,10 @@ export default {
                 glowPulse: {
                     '0%, 100%': { 'box-shadow': '0 0 20px rgba(99,102,241,0.15)' },
                     '50%': { 'box-shadow': '0 0 40px rgba(99,102,241,0.3), 0 0 60px rgba(6,182,212,0.1)' },
+                },
+                pulseSlow: {
+                    '0%, 100%': { opacity: '1' },
+                    '50%': { opacity: '0.85' },
                 },
             },
         },

@@ -18,7 +18,7 @@ import Status from './components/Status';
 function App() {
     return (
         <AuthProvider>
-            <div className="min-h-screen bg-[#0a0a0f] text-white font-sans selection:bg-indigo-500/30">
+            <div className="min-h-screen text-white font-sans" style={{ backgroundColor: 'var(--home-bg)' }}>
                 <Navbar />
                 <Routes>
                     <Route path="/" element={<Home />} />

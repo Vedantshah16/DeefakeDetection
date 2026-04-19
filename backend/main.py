@@ -14,6 +14,34 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import logging
+from dotenv import load_dotenv
+logger = logging.getLogger("uvicorn")
+
+load_dotenv()
+
+# Firebase Admin SDK initialization
+import os
+import firebase_admin
+from firebase_admin import credentials, auth as firebase_auth
+
+FIREBASE_SERVICE_ACCOUNT_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "firebase-service-account.json"
+)
+
+if not firebase_admin._apps:  # Prevent re-initialization on hot reload
+    try:
+        cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT_PATH)
+        firebase_admin.initialize_app(cred)
+        logger.info("Firebase Admin SDK initialized successfully.")
+    except FileNotFoundError:
+        logger.error(
+            f"Firebase service account key not found at {FIREBASE_SERVICE_ACCOUNT_PATH}. "
+            "Google and Phone sign-in will not work. "
+            "Email/password login continues to work normally."
+        )
+    except Exception as e:
+        logger.error(f"Firebase Admin SDK failed to initialize: {e}")
 
 # TrueSight AI model imports
 try:
@@ -48,7 +76,13 @@ logger = logging.getLogger("uvicorn")
 
 
 # JWT Configuration
-SECRET_KEY = "your_secret_key_here_change_for_production" # TODO: usage env var
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY environment variable is not set. "
+        "For local dev: copy backend/.env.example to backend/.env and fill in values. "
+        "For production: set SECRET_KEY in your hosting environment variables."
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -173,6 +207,11 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+class FirebaseBridgeBody(BaseModel):
+    id_token: str
+    display_name: Optional[str] = None
+    photo_url: Optional[str] = None
+
 @app.post("/register")
 def register(user: UserCreate):
     db_user = database.get_user_by_username(user.username)
@@ -198,9 +237,92 @@ def login(user: UserLogin):
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+@app.post("/auth/firebase-bridge", response_model=Token)
+def firebase_bridge(body: FirebaseBridgeBody):
+    """
+    Accept a Firebase ID token from the frontend (issued after Google or Phone
+    sign-in), verify it against Firebase, find-or-create the matching user in
+    our SQLite DB, and return the same JWT format as /login.
+
+    Downstream routes continue to use the existing get_current_user dependency,
+    which reads username from the JWT 'sub' claim — same as email/password users.
+    """
+    # 1. Verify the Firebase ID token
+    try:
+        decoded = firebase_auth.verify_id_token(body.id_token)
+    except Exception as e:
+        logger.error(f"Firebase token verification failed: {e}")
+        raise HTTPException(status_code=401, detail="Invalid Firebase token")
+
+    firebase_uid = decoded.get("uid")
+    if not firebase_uid:
+        raise HTTPException(status_code=401, detail="Firebase token missing uid")
+
+    email = decoded.get("email")
+    phone = decoded.get("phone_number")
+
+    # Extract the sign-in provider for bookkeeping
+    provider_info = decoded.get("firebase", {}).get("sign_in_provider", "unknown")
+    # Typical values: "google.com", "phone", "password"
+    auth_provider = provider_info
+
+    # Use display_name and photo_url from the frontend (populated from Firebase client SDK)
+    display_name = body.display_name
+    photo_url = body.photo_url
+
+    # 2. Look up existing user by firebase_uid
+    user = database.get_user_by_firebase_uid(firebase_uid)
+
+    if not user:
+        # 3. Create a new user with a derived username
+        #    - Google users: "g_<first 12 chars of firebase_uid>"
+        #    - Phone users: the phone number itself (e.g. "+919876543210")
+        #    - Fallback: "fb_<first 12 chars>"
+        if auth_provider == "phone" and phone:
+            username = phone
+        elif auth_provider == "google.com":
+            username = f"g_{firebase_uid[:12]}"
+        else:
+            username = f"fb_{firebase_uid[:12]}"
+
+        # Ensure username uniqueness — if a collision ever happens, suffix with more of the uid
+        if database.get_user_by_username(username):
+            username = f"{username}_{firebase_uid[12:20]}"
+
+        success = database.create_firebase_user(
+            username=username,
+            firebase_uid=firebase_uid,
+            email=email,
+            phone=phone,
+            auth_provider=auth_provider,
+            display_name=display_name,
+            photo_url=photo_url,
+        )
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to create user")
+
+        user = database.get_user_by_firebase_uid(firebase_uid)
+        logger.info(f"Created new Firebase user: username={username}, provider={auth_provider}, display_name={display_name}")
+    else:
+        # User exists — refresh their display_name and photo_url to stay in sync with Google
+        database.update_firebase_user_profile(firebase_uid, display_name, photo_url)
+
+    # 4. Issue our own JWT — same format as /login
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user["username"]},
+        expires_delta=access_token_expires,
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
 @app.get("/users/me")
 async def read_users_me(current_user: dict = Depends(get_current_user)):
-    return {"username": current_user['username']}
+    return {
+        "username": current_user['username'],
+        "display_name": current_user.get('display_name'),
+        "photo_url": current_user.get('photo_url'),
+        "auth_provider": current_user.get('auth_provider'),
+    }
 
 class DetectionResponse(BaseModel):
     label: str
