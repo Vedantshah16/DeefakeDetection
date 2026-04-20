@@ -123,7 +123,19 @@ Representative outputs on held-out test samples, showing the model's verdict alo
 - **Heatmap overlays** for image analysis (model focus visualization)
 - **Audio waveform analysis** with Web Audio API decoding
 - **Scan history** per user with filters, charts, and exports
-- **Triple-auth:** username/password + Google + Phone OTP
+- **Triple-authentication system:** username/password + Google + Phone OTP
+- **Clean editorial interface** built with React and TailwindCSS
+- **Full-stack deployment workflow** combining frontend, backend, model inference, and authentication
+
+
+## Use Cases
+
+TrueSight AI can be used in academic, awareness, and demonstration settings such as:
+
+- Detecting suspicious or AI-generated media in educational demos
+- Showcasing applied deep learning in multimedia forensics projects
+- Demonstrating end-to-end AI deployment with authentication and scan history
+- Raising awareness about misinformation, media tampering, and digital manipulation
 
 ---
 
@@ -218,6 +230,22 @@ pinnacle6/
 ```
 
 ---
+## Limitations
+
+- The current model is intended for academic and research demonstration purposes only.
+- Performance may vary across different datasets, lighting conditions, compression levels, and media quality.
+- Video and audio analysis are currently more limited compared to image-based detection.
+- The system should not be treated as definitive proof of manipulation without human verification.
+- False positives and false negatives may still occur, especially on unseen real-world samples.
+
+## Future Improvements
+
+- Expand training on larger and more diverse real-world deepfake datasets
+- Improve robustness against compressed, low-resolution, and adversarial inputs
+- Explore transformer-based and multimodal architectures
+- Add real-time webcam and live video stream analysis
+- Enhance explainability using stronger visual and audio forensic cues
+- Deploy the system on cloud infrastructure for scalable usage
 
 ## Team
 
