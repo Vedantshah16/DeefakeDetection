@@ -10,7 +10,7 @@ requests
 passlib
 python-jose
 bcrypt
-realitydefender
+# realitydefender — not on public PyPI; code falls back gracefully if missing
 torch>=2.0.0
 torchvision>=0.15.0
 Pillow>=9.0.0

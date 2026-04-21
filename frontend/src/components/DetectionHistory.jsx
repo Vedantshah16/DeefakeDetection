@@ -10,7 +10,7 @@ import HistoryTable from './history/HistoryTable';
 import HistoryGrid from './history/HistoryGrid';
 import * as XLSX from 'xlsx';
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const DetectionHistory = () => {
     const { user } = useAuth();

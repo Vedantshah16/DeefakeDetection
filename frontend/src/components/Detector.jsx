@@ -15,7 +15,7 @@ import AudioPlayer from './scanner/AudioPlayer';
 import { getDemoOverride } from '../config/demoOverrides';
 import { deriveDisplay } from '../utils/deriveVerdict';
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 /* ─── Mode tabs — Live tab removed ─── */
 const MODES = [

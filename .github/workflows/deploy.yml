@@ -1,0 +1,99 @@
+name: Deploy TrueSight AI to Azure Container Apps
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
+
+env:
+  ACR_NAME: truesightacr
+  RESOURCE_GROUP: truesight-rg
+  # Container Apps Environment lives in a different resource group (student plan: 1 env per region)
+  ACA_ENV_NAME: incheshealth-demo-env
+  ACA_ENV_RG: rg-incheshealth-demo
+  APP_NAME: truesight
+  BACKEND_URL: https://truesight-backend.livelypebble-e5bdd4f9.centralindia.azurecontainerapps.io
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout (with Git LFS for the 69MB model weights) ──
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Pull Git LFS objects (model weights)
+        run: git lfs pull
+
+      # ── 2. Azure Login ──────────────────────────────────────────
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      # ── 3. Build & Push Backend ─────────────────────────────────
+      - name: Build & Push Backend
+        run: |
+          docker build --platform linux/amd64 \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}-backend:latest \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}-backend:${{ github.sha }} \
+            ./backend
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}-backend --all-tags
+
+      # ── 4. Build & Push Frontend (bake backend URL into bundle) ─
+      - name: Build & Push Frontend
+        run: |
+          docker build --platform linux/amd64 \
+            --build-arg VITE_API_URL=${{ env.BACKEND_URL }} \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}-frontend:latest \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}-frontend:${{ github.sha }} \
+            ./frontend
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}-frontend --all-tags
+
+      # ── 5. Deploy Backend ───────────────────────────────────────
+      - name: Deploy Backend
+        run: |
+          az containerapp update \
+            --name ${{ env.APP_NAME }}-backend \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}-backend:${{ github.sha }} \
+            --set-env-vars \
+              SECRET_KEY=${{ secrets.SECRET_KEY }} \
+              FIREBASE_SA_BASE64=${{ secrets.FIREBASE_SA_BASE64 }}
+
+      # ── 6. Deploy Frontend ──────────────────────────────────────
+      - name: Deploy Frontend
+        run: |
+          az containerapp update \
+            --name ${{ env.APP_NAME }}-frontend \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}-frontend:${{ github.sha }}
+
+      # ── 7. Health Check ─────────────────────────────────────────
+      - name: Health Check
+        run: |
+          echo "Waiting 30s for containers to start..."
+          sleep 30
+          echo "Checking backend health..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ env.BACKEND_URL }}/health)
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Backend is healthy (HTTP $STATUS)"
+          else
+            echo "⚠️  Backend returned HTTP $STATUS — check Azure portal for startup logs"
+          fi
+
+      # ── 8. Summary ──────────────────────────────────────────────
+      - name: Deployment Summary
+        run: |
+          echo "🚀 TrueSight AI deployed successfully!"
+          echo ""
+          echo "  Commit:   ${{ github.sha }}"
+          echo "  Branch:   ${{ github.ref_name }}"
+          echo "  Backend:  ${{ env.BACKEND_URL }}"
+          echo "  Frontend: https://truesight-frontend.livelypebble-e5bdd4f9.centralindia.azurecontainerapps.io"
