@@ -270,7 +270,7 @@ phase_deploy() {
             --registry-password "${ACR_PASSWORD}" \
             --ingress external \
             --target-port 80 \
-            --min-replicas 0 \
+            --min-replicas 1 \
             --max-replicas 1 \
             --cpu 0.25 --memory 0.5Gi \
             --query "properties.configuration.ingress.fqdn" -o tsv)
